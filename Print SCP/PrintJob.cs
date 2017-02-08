@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing.Printing;
-//using System.Drawing.Printing;
 using System.Linq;
 using System.Threading;
 
@@ -99,7 +98,7 @@ namespace Dicom.Printing
             }
             set
             {
-                Add(DicomTag.ExecutionStatus, value);
+                AddOrUpdate(DicomTag.ExecutionStatus, value);
             }
         }
 
@@ -114,7 +113,7 @@ namespace Dicom.Printing
             }
             set
             {
-                Add(DicomTag.ExecutionStatusInfo, value);
+                AddOrUpdate(DicomTag.ExecutionStatusInfo, value);
             }
         }
 
@@ -137,7 +136,7 @@ namespace Dicom.Printing
             }
             set
             {
-                Add(DicomTag.PrintPriority, value);
+                AddOrUpdate(DicomTag.PrintPriority, value);
             }
         }
 
@@ -152,8 +151,8 @@ namespace Dicom.Printing
             }
             set
             {
-                Add(DicomTag.CreationDate, value);
-                Add(DicomTag.CreationTime, value);
+                AddOrUpdate(DicomTag.CreationDate, value);
+                AddOrUpdate(DicomTag.CreationTime, value);
             }
         }
 
@@ -168,7 +167,7 @@ namespace Dicom.Printing
             }
             set
             {
-                Add(DicomTag.PrinterName, value);
+                AddOrUpdate(DicomTag.PrinterName, value);
             }
         }
 
@@ -183,7 +182,7 @@ namespace Dicom.Printing
             }
             set
             {
-                Add(DicomTag.Originator, value);
+                AddOrUpdate(DicomTag.Originator, value);
             }
         }
 

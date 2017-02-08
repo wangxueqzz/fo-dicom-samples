@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 using Dicom.Network;
 
@@ -34,7 +35,7 @@ namespace Dicom.Printing
                                                                                                  .ImplicitVRLittleEndian
                                                                                          };
 
-        private static DicomServer<PrintService> _server;
+        private static IDicomServer _server;
 
         public static Printer Printer { get; private set; }
 
@@ -54,8 +55,8 @@ namespace Dicom.Printing
 
         #region Constructors and Initialization
 
-        public PrintService(System.IO.Stream stream, Dicom.Log.Logger log)
-            : base(stream, log)
+        public PrintService(INetworkStream stream, Encoding fallbackEncoding, Dicom.Log.Logger log)
+            : base(stream, fallbackEncoding, log)
         {
             var pi = stream.GetType()
                 .GetProperty(
@@ -76,7 +77,7 @@ namespace Dicom.Printing
         public static void Start(int port, string aet)
         {
             Printer = new Printer(aet);
-            _server = new DicomServer<PrintService>(port);
+            _server = DicomServer.Create<PrintService>(port);
         }
 
         public static void Stop()
@@ -212,7 +213,6 @@ namespace Dicom.Printing
             this.Logger.Info("Create new film session {0}", _filmSession.SOPInstanceUID.UID);
 
             var response = new DicomNCreateResponse(request, DicomStatus.Success);
-            response.Command.Add(DicomTag.AffectedSOPInstanceUID, _filmSession.SOPInstanceUID);
             return response;
         }
 
@@ -239,7 +239,6 @@ namespace Dicom.Printing
             this.Logger.Info("Created new film box {0}", filmBox.SOPInstanceUID.UID);
 
             var response = new DicomNCreateResponse(request, DicomStatus.Success);
-            response.Command.Add(DicomTag.AffectedSOPInstanceUID, filmBox.SOPInstanceUID);
             response.Dataset = filmBox;
             return response;
         }
@@ -285,9 +284,8 @@ namespace Dicom.Printing
             {
                 status = DicomStatus.NoSuchObjectInstance;
             }
-            var response = new DicomNDeleteResponse(request, status);
 
-            response.Command.Add(DicomTag.AffectedSOPInstanceUID, request.SOPInstanceUID);
+            var response = new DicomNDeleteResponse(request, status);
             return response;
         }
 
@@ -390,8 +388,7 @@ namespace Dicom.Printing
             filmBox.Initialize();
 
             var response = new DicomNSetResponse(request, DicomStatus.Success);
-            response.Command.Add(DicomTag.AffectedSOPInstanceUID, filmBox.SOPInstanceUID);
-            response.Command.Add(DicomTag.CommandDataSetType, (ushort)0x0202);
+            response.Command.AddOrUpdate(DicomTag.AffectedSOPInstanceUID, filmBox.SOPInstanceUID);
             response.Dataset = filmBox;
             return response;
         }
@@ -490,7 +487,7 @@ namespace Dicom.Printing
             dataset.Add(sequence);
 
             var response = new DicomNGetResponse(request, DicomStatus.Success);
-            response.Command.Add(DicomTag.AffectedSOPInstanceUID, request.SOPInstanceUID);
+            response.Command.AddOrUpdate(DicomTag.AffectedSOPInstanceUID, request.SOPInstanceUID);
             response.Dataset = dataset;
             return response;
 
@@ -603,7 +600,7 @@ namespace Dicom.Printing
                         var result = new DicomDataset();
                         result.Add(
                             new DicomSequence(
-                                new DicomTag(0x2100, 0x0500),
+                                DicomTag.ReferencedPrintJobSequenceRETIRED,
                                 new DicomDataset(
                                     new DicomUniqueIdentifier(DicomTag.ReferencedSOPClassUID, DicomUID.PrintJobSOPClass)),
                                 new DicomDataset(
@@ -612,7 +609,7 @@ namespace Dicom.Printing
                                         printJob.SOPInstanceUID))));
 
                         var response = new DicomNActionResponse(request, DicomStatus.Success);
-                        response.Command.Add(DicomTag.AffectedSOPInstanceUID, printJob.SOPInstanceUID);
+                        response.Command.AddOrUpdate(DicomTag.AffectedSOPInstanceUID, printJob.SOPInstanceUID);
                         response.Dataset = result;
 
                         return response;
